@@ -1,4 +1,6 @@
--- Test
+-- bindings is a root tablee to manage all hotkey configs
+-- GlobalBindings is empty T{} intended to hold hotkey configs for all jobs
+-- JobBindings is a T{} with two more T{} nested. Default holds Job scope hotkeys. Palettes hold palette scope hotkeys
 local bindings = {
     GlobalBindings = T{},
     JobBindings = T{
@@ -6,37 +8,49 @@ local bindings = {
         Palettes = T{ { Name="Base", Bindings = T{} } }
     },
 };
-bindings.ActivePalette = bindings.JobBindings.Palettes[1];
-bindings.ActivePaletteIndex = 1;
-bindings.LastPaletteIndex = 1;
 
+
+bindings.ActivePalette = bindings.JobBindings.Palettes[1]; -- ActivePalette set as the first Palette in list "Base"
+bindings.ActivePaletteIndex = 1; -- Storing the index of the currently active palette
+bindings.LastPaletteIndex = 1; -- Storing the last/previous active palette index 
+
+
+-- Write Binding is used to write out a singlee hotkey binding. 
 local function WriteBinding(writer, depth, hotkey, binding)
+
+    -- pad variables used to make file more human readable. Each one is different depth of spaces on each line.
     local pad1 = string.rep(' ', depth);
     local pad2 = string.rep(' ', depth + 4);
     local pad3 = string.rep(' ', depth + 8);
-    writer:write(string.format('%s[%q] = {\n', pad1, hotkey));
+
+    writer:write(string.format('%s[%q] = {\n', pad1, hotkey)); -- Writes hotkey string to file exactly as it is %s with quotes and brackets [%q]. 
+
     depth = depth + 4;
-    writer:write(string.format('%sActionType              = \'%s\',\n', pad2, binding.ActionType));
-    if T{'Ability', 'Item', 'Spell', 'Trust', 'Weaponskill'}:contains(binding.ActionType) then
-        writer:write(string.format('%sId                      = %u,\n', pad2, binding.Id));
+
+    writer:write(string.format('%sActionType              = \'%s\',\n', pad2, binding.ActionType)); -- Writes the action type spell/ability.. on the next line with a futher indent.
+    if T{'Ability', 'Item', 'Spell', 'Trust', 'Weaponskill'}:contains(binding.ActionType) then -- Contains a method of T{} called contains to confirm valid Action Type
+        writer:write(string.format('%sId                      = %u,\n', pad2, binding.Id)); -- Writes binding.Id to to file unsigned integer
     end
-    writer:write(string.format('%sMacro                   = T{\n', pad2));
+    writer:write(string.format('%sMacro                   = T{\n', pad2)); -- Writes line to file that declars a T{} named Macro
     for _,line in ipairs(binding.Macro) do
-        writer:write(string.format('%s%q,\n', pad3, line));
+        writer:write(string.format('%s%q,\n', pad3, line)); -- Writes each entry of the binding.Macro list
     end
-    writer:write(string.format('%s},\n', pad2));
+    writer:write(string.format('%s},\n', pad2)); -- This writes the closing brace on the next line
+
     if (binding.CostOverride ~= nil) then
-        writer:write(string.format('%sCostOverride            = T{ ', pad2));
+        writer:write(string.format('%sCostOverride            = T{ ', pad2)); -- Writes the line of "CostOverride" to the file and the opening of T{}
         local first = true;
         for _,id in ipairs(binding.CostOverride) do
             if not first then
-                writer:write(', ');
+                writer:write(', '); -- Adds comma after each id if not the first id in the T{}
             end
-            writer:write(tostring(id));
+            writer:write(tostring(id)); -- Writes the id as entry to T{}
             first = false;
         end
         writer:write(' },\n');
     end
+
+    -- These write functions write a new line for each binding value. The lines with booleans are written as "A and B or C"
     writer:write(string.format('%sLabel                   = %q,\n', pad2, binding.Label));
     writer:write(string.format('%sImage                   = %q,\n', pad2, binding.Image));
     writer:write(string.format('%sShowCost                = %s,\n', pad2, binding.ShowCost and 'true' or 'false'));
