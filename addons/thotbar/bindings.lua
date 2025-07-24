@@ -1,3 +1,4 @@
+-- Test
 local bindings = {
     GlobalBindings = T{},
     JobBindings = T{
